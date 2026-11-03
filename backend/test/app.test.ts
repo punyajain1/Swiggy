@@ -107,6 +107,27 @@ describe("Swiggy-backed routes", () => {
     expect(third.body.error.code).toBe("RATE_LIMITED");
   });
 
+  it("protect /api/sidequest the same way", async () => {
+    const { app } = await build();
+    const res = await request(app).post("/api/sidequest").send({ text: "evening in Delhi" });
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe("SWIGGY_NOT_CONNECTED");
+
+    const connected = await build({ connected: true });
+    expect((await request(connected.app).post("/api/sidequest").send({ text: "x" })).status).toBe(400);
+    const noAddress = await request(connected.app).post("/api/sidequest").send({ text: "evening in Delhi" });
+    expect(noAddress.status).toBe(409);
+    expect(noAddress.body.error.code).toBe("NO_ADDRESS");
+  });
+
+  it("rate-limit /api/sidequest separately from /api/decide", async () => {
+    const { app } = await build({ connected: true });
+    // decide's limit is 100 in tests; sidequest's own default is 10 per minute.
+    let last = 0;
+    for (let i = 0; i < 11; i++) last = (await request(app).post("/api/sidequest").send({ text: "evening in Delhi" })).status;
+    expect(last).toBe(429);
+  });
+
   it("list addresses", async () => {
     const { app } = await build({ connected: true });
     const res = await request(app).get("/api/addresses");

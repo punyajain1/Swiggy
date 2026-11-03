@@ -16,6 +16,9 @@ import { sleep } from "./retryingFetch.js";
 export const ALLOWED_TOOLS: Record<SwiggyServer, ReadonlySet<string>> = {
   food: new Set(["get_addresses", "search_restaurants", "search_menu", "update_food_cart", "get_food_cart"]),
   im: new Set(["get_addresses", "search_products", "update_cart", "get_cart"]),
+  // SideQuest only reads Dineout and Scenes. Booking, cart and payment tools stay out on purpose.
+  dineout: new Set(["search_restaurants_dineout", "get_available_slots"]),
+  scenes: new Set(["discover_events", "get_events_collection", "search_events", "get_event_details", "list_event_shows"]),
 };
 
 export interface SessionControl {
@@ -130,6 +133,46 @@ export async function callTool<S extends z.ZodType>(
   args: Record<string, unknown>,
   schema: S,
 ): Promise<z.infer<S>> {
+  return invoke(deps, server, tool, args, (result) => {
+    const parsed = schema.safeParse(unwrapToolResult(tool, result));
+    if (!parsed.success) {
+      logger.warn({ tool, server, correlationId: correlationId(), issues: parsed.error.issues.slice(0, 5) }, "Unexpected Swiggy response shape");
+      throw new SwiggyToolError(tool, "returned data in an unexpected shape");
+    }
+    return parsed.data;
+  });
+}
+
+/** The text of a tool result, with an error result turned into a thrown SwiggyToolError. */
+export function textOrThrow(tool: string, result: CallToolResult): string {
+  const text = textOf(result);
+  if (result.isError) throw new SwiggyToolError(tool, text || "the tool reported an error");
+  return text;
+}
+
+/**
+ * Like callTool, for tools that answer in text only. Swiggy's Dineout search and slot tools return
+ * `structuredContent: {}` and put the data in a numbered text list, so the structured path would
+ * read them as empty. `parse` gets the text and throws SwiggyToolError if it can't read it.
+ * Same auth, retry and rate-limit handling as callTool.
+ */
+export async function callToolText<T>(
+  deps: CallToolDeps,
+  server: SwiggyServer,
+  tool: string,
+  args: Record<string, unknown>,
+  parse: (text: string) => T,
+): Promise<T> {
+  return invoke(deps, server, tool, args, (result) => parse(textOrThrow(tool, result)));
+}
+
+async function invoke<T>(
+  deps: CallToolDeps,
+  server: SwiggyServer,
+  tool: string,
+  args: Record<string, unknown>,
+  handle: (result: CallToolResult) => T,
+): Promise<T> {
   if (!ALLOWED_TOOLS[server].has(tool)) {
     throw new Error(`Tool "${tool}" on "${server}" is not allowed in this app`);
   }
@@ -145,14 +188,9 @@ export async function callTool<S extends z.ZodType>(
     const t0 = now();
     try {
       const result = await deps.transport.callTool(server, tool, args);
-      const data = unwrapToolResult(tool, result);
-      const parsed = schema.safeParse(data);
-      if (!parsed.success) {
-        logger.warn({ tool, server, correlationId: cid, issues: parsed.error.issues.slice(0, 5) }, "Unexpected Swiggy response shape");
-        throw new SwiggyToolError(tool, "returned data in an unexpected shape");
-      }
+      const value = handle(result);
       logger.info({ event: "mcp_tool_call", tool, server, correlationId: cid, durationMs: now() - t0, status: "ok", attempt });
-      return parsed.data;
+      return value;
     } catch (err) {
       const kind = err instanceof HttpError ? "fatal" : classifyError(err);
       logger.warn({

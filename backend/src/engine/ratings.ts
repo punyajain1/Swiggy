@@ -23,8 +23,8 @@ export function parseRatingCount(value: string | number | undefined | null): num
 export function adjustedRating(
   rating: number | undefined,
   count: number | undefined,
-  prior = appConfig.ratings.priorMean,
-  weight = appConfig.ratings.priorWeight,
+  prior: number = appConfig.ratings.priorMean,
+  weight: number = appConfig.ratings.priorWeight,
 ): number | undefined {
   if (rating === undefined || !(rating > 0)) return undefined;
   const v = count ?? weight;

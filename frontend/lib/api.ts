@@ -1,4 +1,5 @@
 import axios, { isAxiosError } from "axios";
+import type { SideQuest } from "./sidequest-types";
 import type { Address, AuthStatus, CartResult, Decision, Settings } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
@@ -53,6 +54,7 @@ export const api = {
   fillFoodCart: (decisionId: string, restaurantOptionId: string) =>
     call<CartResult>(http.post("/api/cart/food", { decisionId, restaurantOptionId })),
   fillInstamartCart: (decisionId: string) => call<CartResult>(http.post("/api/cart/instamart", { decisionId })),
+  sidequest: (text: string) => call<SideQuest>(http.post("/api/sidequest", { text })),
 };
 
 /** True when the user has to (re)connect Swiggy before trying again. */

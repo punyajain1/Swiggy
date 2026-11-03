@@ -22,7 +22,12 @@ const provider = new SwiggyOAuthProvider(authStore, {
   encryptionKey: config.TOKEN_ENC_KEY,
 });
 const mcp = new McpClientManager({
-  urls: { food: config.SWIGGY_FOOD_URL, im: config.SWIGGY_IM_URL },
+  urls: {
+    food: config.SWIGGY_FOOD_URL,
+    im: config.SWIGGY_IM_URL,
+    dineout: config.SWIGGY_DINEOUT_URL,
+    scenes: config.SWIGGY_SCENES_URL,
+  },
   authProvider: provider,
   fetch: createRateLimitedFetch(),
 });

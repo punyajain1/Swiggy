@@ -5,7 +5,8 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import type { FetchLike } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { logger } from "../logger.js";
 
-export type SwiggyServer = "food" | "im";
+export const swiggyServers = ["food", "im", "dineout", "scenes"] as const;
+export type SwiggyServer = (typeof swiggyServers)[number];
 
 /** The one operation the rest of the app needs from MCP: call a tool and get the raw result. */
 export interface ToolTransport {

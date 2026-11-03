@@ -235,3 +235,178 @@ export const instamartCartSchema = z.looseObject({
   cartAbsentReason: str,
 });
 export type InstamartCart = z.infer<typeof instamartCartSchema>;
+
+// ---------- Dineout (read-only: SideQuest never books) ----------
+// Dineout search and slot tools answer in text, not structured data; see textParsers.ts.
+
+/** Ratings come as `{ value, count }` or a bare number. Search results carry no count. */
+const dineoutRating = z
+  .union([z.looseObject({ value: num, count: num }), z.number(), z.string()])
+  .nullish()
+  .transform((v) => {
+    if (v === null || v === undefined) return undefined;
+    if (typeof v === "object") return { value: v.value, count: v.count };
+    const n = Number(v);
+    return Number.isFinite(n) ? { value: n, count: undefined } : undefined;
+  });
+
+export const dineoutRestaurantSchema = z.looseObject({
+  id: z.union([z.string(), z.number()]).transform(String),
+  name: z.string(),
+  cuisine: z.array(z.string()).nullish(),
+  locality: str,
+  area: str,
+  rating: dineoutRating,
+  costForTwo: str,
+  distance: str,
+});
+export type DineoutRestaurant = z.infer<typeof dineoutRestaurantSchema>;
+
+export const dineoutSearchSchema = z.looseObject({
+  restaurants: z.array(dineoutRestaurantSchema).default([]),
+  total: num,
+  nextOffset: num,
+});
+export type DineoutSearch = z.infer<typeof dineoutSearchSchema>;
+
+/** One meal service on one day, e.g. Dinner 17:00 to 24:45. `endMin` can pass 1440 for a service that runs past midnight. */
+export interface DineoutMeal {
+  name: string;
+  startMin: number;
+  endMin: number;
+  slots: number;
+}
+
+export interface DineoutDay {
+  /** YYYY-MM-DD */
+  date: string;
+  meals: DineoutMeal[];
+  /** A free reservation is offered on this day. */
+  free: boolean;
+  /** Paid pre-book deals on this day. */
+  paid: Array<{ price: number | null; title: string | null }>;
+}
+
+export interface DineoutSlots {
+  days: DineoutDay[];
+}
+
+// ---------- Scenes (read-only: SideQuest never buys tickets) ----------
+
+const sceneEventCard = z.looseObject({
+  eventId: z.union([z.string(), z.number()]).transform(String),
+  eventName: z.string(),
+  venueName: str,
+  area: str,
+  date: str,
+  price: str,
+});
+export type SceneEventCard = z.infer<typeof sceneEventCard>;
+
+/** Often empty: discover_events returned nothing for Delhi, Mumbai or Bengaluru when checked live. */
+export const discoverEventsSchema = z.looseObject({
+  events: z.array(sceneEventCard).default([]),
+  collectionChips: z
+    .array(z.looseObject({ collectionIdentifier: z.union([z.string(), z.number()]).transform(String), label: z.string() }))
+    .default([]),
+});
+export type DiscoverEvents = z.infer<typeof discoverEventsSchema>;
+
+export const eventsCollectionSchema = z.looseObject({
+  events: z.array(sceneEventCard).default([]),
+});
+export type EventsCollection = z.infer<typeof eventsCollectionSchema>;
+
+/** search_events: matches across all cities, each with a "Locality, City" string. */
+export const searchEventsSchema = z.looseObject({
+  suggestions: z
+    .array(
+      z.looseObject({
+        eventId: z.union([z.string(), z.number()]).transform(String),
+        eventName: z.string(),
+        location: str,
+      }),
+    )
+    .default([]),
+});
+export type SearchEvents = z.infer<typeof searchEventsSchema>;
+
+export const eventDetailsSchema = z.looseObject({
+  eventId: str,
+  eventName: str,
+  venueId: str,
+  venueName: str,
+  area: str,
+  formattedAddress: str,
+  venueLat: num,
+  venueLng: num,
+  upcomingDate: str,
+  price: str,
+});
+export type EventDetails = z.infer<typeof eventDetailsSchema>;
+
+/** Money arrives as `{ units: "249", nanos: 0 }`. */
+const money = z
+  .looseObject({ units: z.union([z.string(), z.number()]).nullish(), nanos: z.number().nullish() })
+  .nullish()
+  .transform((m) => {
+    if (!m || m.units === null || m.units === undefined) return undefined;
+    const n = Number(m.units) + (m.nanos ?? 0) / 1e9;
+    return Number.isFinite(n) ? n : undefined;
+  });
+
+const sceneTicket = z.looseObject({
+  id: str,
+  name: str,
+  availableInventory: num,
+  price: z.looseObject({ price: money, discountedPrice: money }).nullish(),
+});
+
+const sceneVenue = z.looseObject({
+  id: str,
+  name: str,
+  address: str,
+  cityDisplayName: str,
+  localityDisplayName: str,
+  location: z.looseObject({ latLng: z.looseObject({ latitude: num, longitude: num }).nullish() }).nullish(),
+});
+
+/** list_event_shows, as returned live. `venueDetails` is an array there although the docs show one object. */
+export const eventShowsSchema = z.looseObject({
+  eventShowListing: z
+    .looseObject({
+      venueDetails: z
+        .union([sceneVenue, z.array(sceneVenue)])
+        .nullish()
+        .transform((v) => (v === null || v === undefined ? [] : Array.isArray(v) ? v : [v])),
+      eventInfo: z
+        .looseObject({
+          id: str,
+          name: str,
+          languages: z.array(z.string()).nullish(),
+          ageGroup: str,
+          eventDuration: z.looseObject({ type: str, value: num }).nullish(),
+          eventCategory: z.looseObject({ name: str }).nullish(),
+        })
+        .nullish(),
+      dateGroupedEventShow: z
+        .array(
+          z.looseObject({
+            eventShow: z
+              .array(
+                z.looseObject({
+                  id: str,
+                  show_time_unix: num,
+                  show_time_ist: str,
+                  maxAvailableInventory: num,
+                  tickets: z.array(sceneTicket).default([]),
+                }),
+              )
+              .default([]),
+          }),
+        )
+        .default([]),
+    })
+    .nullish(),
+});
+export type EventShows = z.infer<typeof eventShowsSchema>;

@@ -8,8 +8,9 @@ import { decide } from "../engine/decide.js";
 import type { DecisionCache } from "../engine/decisionCache.js";
 import { errors } from "../errors.js";
 import { settingsUpdateSchema, type SettingsStore } from "../settings/settings.js";
+import { planSideQuest } from "../sidequest/sidequest.js";
 import type { SwiggyApi } from "../swiggy/api.js";
-import type { SwiggyServer } from "../swiggy/mcpClient.js";
+import { swiggyServers, type SwiggyServer } from "../swiggy/mcpClient.js";
 
 export interface ApiDeps {
   auth: AuthService;
@@ -21,9 +22,13 @@ export interface ApiDeps {
   tools?: { listTools(server: SwiggyServer): Promise<Array<{ name: string; inputSchema: unknown }>> };
   enableDebug: boolean;
   decideRateLimit?: { windowMs: number; limit: number };
+  sidequestRateLimit?: { windowMs: number; limit: number };
+  /** Clock for SideQuest's evening window. Tests pin it. */
+  now?: () => number;
 }
 
 const decideBody = z.object({ text: z.string().trim().min(2).max(300) });
+const sidequestBody = z.object({ text: z.string().trim().min(5).max(400) });
 const foodCartBody = z.object({ decisionId: z.uuid(), restaurantOptionId: z.string().min(1).max(100) });
 const instamartCartBody = z.object({ decisionId: z.uuid() });
 const debugSearchQuery = z.object({
@@ -41,17 +46,18 @@ export function apiRouter(deps: ApiDeps): Router {
     next();
   };
 
-  const decideLimiter = rateLimit({
-    windowMs: deps.decideRateLimit?.windowMs ?? 60_000,
-    limit: deps.decideRateLimit?.limit ?? 10,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    handler: (_req, res) => {
-      res.status(429).json({
-        error: { code: "RATE_LIMITED", message: "Too many comparisons in a short time. Wait a minute and try again." },
-      });
-    },
-  });
+  const limiter = (opts: { windowMs: number; limit: number } | undefined, message: string) =>
+    rateLimit({
+      windowMs: opts?.windowMs ?? 60_000,
+      limit: opts?.limit ?? 10,
+      standardHeaders: "draft-8",
+      legacyHeaders: false,
+      handler: (_req, res) => {
+        res.status(429).json({ error: { code: "RATE_LIMITED", message } });
+      },
+    });
+  const decideLimiter = limiter(deps.decideRateLimit, "Too many comparisons in a short time. Wait a minute and try again.");
+  const sidequestLimiter = limiter(deps.sidequestRateLimit, "Too many quests in a short time. Wait a minute and try again.");
 
   router.get("/settings", async (_req, res) => {
     res.json(await deps.settings.get());
@@ -77,6 +83,11 @@ export function apiRouter(deps: ApiDeps): Router {
   router.post("/decide", decideLimiter, requireSwiggy, async (req, res) => {
     const { text } = decideBody.parse(req.body);
     res.json(await decide(deps, text));
+  });
+
+  router.post("/sidequest", sidequestLimiter, requireSwiggy, async (req, res) => {
+    const { text } = sidequestBody.parse(req.body);
+    res.json(await planSideQuest({ api: deps.api, llm: deps.llm, settings: deps.settings, now: deps.now }, text));
   });
 
   router.post("/cart/food", requireSwiggy, async (req, res) => {
@@ -109,7 +120,7 @@ export function apiRouter(deps: ApiDeps): Router {
 
     // Shows each tool's live input schema, to check argument names against the docs.
     router.get("/debug/tools", requireSwiggy, async (req, res) => {
-      const server = z.enum(["food", "im"]).parse(req.query.server);
+      const server = z.enum(swiggyServers).parse(req.query.server);
       if (!deps.tools) throw errors.notFound("Tool listing is not available");
       res.json(await deps.tools.listTools(server));
     });

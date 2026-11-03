@@ -7,7 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { useAppState } from "./app-state";
 
-/** Tells the user what's missing (Swiggy login or an address) before they can compare. Renders nothing when ready. */
+/** Tells the user what's missing (Swiggy login or an address) before any service can run. Renders nothing when ready. */
 export function SetupBanner() {
   const { status, settings, error } = useAppState();
 
@@ -28,7 +28,10 @@ export function SetupBanner() {
         <PlugZap />
         <AlertTitle>{status.needsReconnect ? "Your Swiggy session expired" : "Connect your Swiggy account"}</AlertTitle>
         <AlertDescription>
-          <p>Cook or Click reads real prices from Swiggy Food and Instamart. You log in on Swiggy with your phone and an OTP.</p>
+          <p>
+            Every service here reads live data from Swiggy (Food, Instamart, Dineout and Scenes) with one login. You log in on
+            Swiggy with your phone and an OTP.
+          </p>
           <a href={api.loginUrl()} className={buttonVariants({ size: "sm", className: "mt-2 w-fit" })}>
             {status.needsReconnect ? "Reconnect Swiggy" : "Connect Swiggy"}
           </a>

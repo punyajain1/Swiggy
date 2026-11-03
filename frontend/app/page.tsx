@@ -1,79 +1,56 @@
-"use client";
-
-import { RefreshCw, TriangleAlert } from "lucide-react";
-import { useState } from "react";
-import { useAppState } from "@/components/app-state";
-import { CravingForm } from "@/components/craving-form";
-import { ProgressSteps } from "@/components/progress-steps";
-import { DecisionResults } from "@/components/results/decision-results";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { services } from "@/components/services";
 import { SetupBanner } from "@/components/setup-banner";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { api, ApiError, errorMessage, isSessionError } from "@/lib/api";
-import type { Decision } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
-export default function HomePage() {
-  const { status, settings, refresh } = useAppState();
-  const [decision, setDecision] = useState<Decision | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<{ message: string; code?: string } | null>(null);
-  const [lastText, setLastText] = useState("");
-
-  const ready = Boolean(status?.connected && settings?.addressId);
-
-  async function run(text: string) {
-    setLastText(text);
-    setLoading(true);
-    setError(null);
-    setDecision(null);
-    try {
-      setDecision(await api.decide(text));
-    } catch (err) {
-      setError({ message: errorMessage(err), ...(err instanceof ApiError ? { code: err.code } : {}) });
-      if (isSessionError(err)) void refresh();
-    } finally {
-      setLoading(false);
-    }
-  }
-
+/** The hub: one tile per service, like Swiggy's home screen. */
+export default function HubPage() {
   return (
     <div className="grid gap-8">
-      <section className="grid gap-4">
-        <div className="grid gap-2">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Cook it, or click it?</h1>
-          <p className="max-w-2xl text-muted-foreground">
-            Tell us what you&apos;re craving. We price the ingredients on Instamart, check restaurants on Swiggy Food, and
-            show you which is better for you tonight: money, time, effort and ratings.
-          </p>
-        </div>
-        <SetupBanner />
-        <CravingForm onSubmit={(t) => void run(t)} loading={loading} disabled={!ready} />
+      <section className="grid gap-2">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">What&apos;s the plan tonight?</h1>
+        <p className="max-w-2xl text-muted-foreground">
+          Two small helpers on one Swiggy login. Pick one to start.
+        </p>
       </section>
 
-      {loading && <ProgressSteps />}
+      <SetupBanner />
 
-      {error && !loading && (
-        <Alert variant="destructive">
-          <TriangleAlert />
-          <AlertTitle>Couldn&apos;t compare that</AlertTitle>
-          <AlertDescription>
-            <p>{error.message}</p>
-            <div className="mt-2 flex gap-2">
-              {error.code === "SWIGGY_RECONNECT" || error.code === "SWIGGY_NOT_CONNECTED" ? (
-                <a href={api.loginUrl()} className={buttonVariants({ size: "sm" })}>
-                  Reconnect Swiggy
-                </a>
-              ) : error.code === "BAD_REQUEST" || error.code === "NO_ADDRESS" ? null : (
-                <Button size="sm" variant="outline" onClick={() => void run(lastText)}>
-                  <RefreshCw /> Try again
-                </Button>
+      <section className="grid gap-4 md:grid-cols-2" aria-label="Services">
+        {services.map((s) => {
+          const Icon = s.icon;
+          return (
+            <Link
+              key={s.id}
+              href={s.href}
+              className={cn(
+                "group grid gap-4 rounded-2xl border bg-card p-6 shadow-sm ring-0 ring-transparent transition hover:-translate-y-0.5 hover:shadow-md hover:ring-4",
+                s.accent.ring,
               )}
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {decision && !loading && <DecisionResults decision={decision} onSessionExpired={() => void refresh()} />}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <span className={cn("flex size-12 items-center justify-center rounded-xl", s.accent.bg, s.accent.text)}>
+                  <Icon className="size-6" />
+                </span>
+                <ArrowRight className="size-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-foreground" />
+              </div>
+              <div className="grid gap-1">
+                <h2 className="text-xl font-semibold">{s.name}</h2>
+                <p className="font-medium">{s.tagline}</p>
+                <p className="text-sm text-muted-foreground">{s.description}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {s.poweredBy.map((p) => (
+                  <span key={p} className={cn("rounded-full px-2.5 py-0.5 text-xs font-medium", s.accent.soft)}>
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </Link>
+          );
+        })}
+      </section>
     </div>
   );
 }

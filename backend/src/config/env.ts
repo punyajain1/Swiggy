@@ -18,6 +18,8 @@ export const envSchema = z.object({
   SWIGGY_REDIRECT_URL: z.url().default("http://localhost:4000/auth/callback"),
   SWIGGY_FOOD_URL: z.url().default("https://mcp.swiggy.com/food"),
   SWIGGY_IM_URL: z.url().default("https://mcp.swiggy.com/im"),
+  SWIGGY_DINEOUT_URL: z.url().default("https://mcp.swiggy.com/dineout"),
+  SWIGGY_SCENES_URL: z.url().default("https://mcp.swiggy.com/scenes"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
 });
 

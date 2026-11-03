@@ -39,7 +39,9 @@ export function SettingsView() {
         <CardHeader>
           <CardTitle>Your preferences</CardTitle>
           <CardDescription>
-            These shape every comparison: where you are, how many you usually cook for, and how you value your time.
+            Shared by every service. Your address is where food is delivered (Cook or Click, and SideQuest&apos;s late-night
+            stop). The rest shapes Cook or Click&apos;s comparisons, and your default servings is SideQuest&apos;s group size
+            when you don&apos;t say one.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -21,6 +21,9 @@
   --color-destructive: var(--destructive);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-quest: var(--quest);
+  --color-quest-foreground: var(--quest-foreground);
+  --color-quest-muted: var(--quest-muted);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -50,6 +53,10 @@
   --destructive: oklch(0.58 0.22 27);
   --success: oklch(0.58 0.14 150);
   --warning: oklch(0.75 0.15 75);
+  /* SideQuest's own accent, so the two services feel distinct inside one app */
+  --quest: oklch(0.5 0.2 290);
+  --quest-foreground: oklch(0.99 0 0);
+  --quest-muted: oklch(0.96 0.03 290);
   --border: oklch(0.9 0.012 75);
   --input: oklch(0.88 0.012 75);
   --ring: oklch(0.68 0.19 45);

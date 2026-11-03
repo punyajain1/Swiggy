@@ -1,18 +1,36 @@
-import { callTool, type CallToolDeps } from "./callTool.js";
+import { callTool, callToolText, type CallToolDeps } from "./callTool.js";
+import { parseDineoutSearchText, parseDineoutSlotsText } from "./textParsers.js";
 import {
   addressesSchema,
+  discoverEventsSchema,
+  eventDetailsSchema,
+  eventShowsSchema,
+  eventsCollectionSchema,
   foodCartSchema,
   instamartCartSchema,
   searchMenuSchema,
   searchProductsSchema,
+  searchEventsSchema,
   searchRestaurantsSchema,
   type Addresses,
+  type DineoutSearch,
+  type DineoutSlots,
+  type DiscoverEvents,
+  type EventDetails,
+  type EventShows,
+  type EventsCollection,
   type FoodCart,
   type InstamartCart,
   type SearchMenu,
+  type SearchEvents,
   type SearchProducts,
   type SearchRestaurants,
 } from "./schemas.js";
+
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
 
 /** One variant choice for update_food_cart, paired with its customization group. */
 export interface FoodVariantChoice {
@@ -103,5 +121,66 @@ export class SwiggyApi {
 
   getInstamartCart(): Promise<InstamartCart> {
     return callTool(this.deps, "im", "get_cart", {}, instamartCartSchema);
+  }
+
+  // ----- Dineout (read-only) -----
+
+  /** `query` is one term (a cuisine, area, kind of place or vibe), not a sentence. Answers in text, parsed here. */
+  searchDineout(query: string, at: LatLng, limit = 30): Promise<DineoutSearch> {
+    return callToolText(
+      this.deps,
+      "dineout",
+      "search_restaurants_dineout",
+      { query, latitude: at.lat, longitude: at.lng, limit },
+      parseDineoutSearchText,
+    );
+  }
+
+  /** Meal service hours and free/paid deals for up to 7 days from `date` (YYYY-MM-DD). Answers in text, parsed here. */
+  getDineoutSlots(restaurantId: string, date: string, at: LatLng): Promise<DineoutSlots> {
+    return callToolText(
+      this.deps,
+      "dineout",
+      "get_available_slots",
+      { restaurantId, date, latitude: at.lat, longitude: at.lng },
+      parseDineoutSlotsText,
+    );
+  }
+
+  // ----- Scenes (read-only) -----
+
+  discoverEvents(at: LatLng): Promise<DiscoverEvents> {
+    return callTool(this.deps, "scenes", "discover_events", { latitude: at.lat, longitude: at.lng }, discoverEventsSchema);
+  }
+
+  getEventsCollection(collectionIdentifier: string, at: LatLng): Promise<EventsCollection> {
+    return callTool(
+      this.deps,
+      "scenes",
+      "get_events_collection",
+      { collectionIdentifier, latitude: at.lat, longitude: at.lng },
+      eventsCollectionSchema,
+    );
+  }
+
+  /** Matches across every city, each with a "Locality, City" string, so callers filter by place. */
+  searchEvents(query: string, at: LatLng): Promise<SearchEvents> {
+    return callTool(this.deps, "scenes", "search_events", { query, latitude: at.lat, longitude: at.lng }, searchEventsSchema);
+  }
+
+  /** The only source of an event's venueId and venue coordinates. */
+  getEventDetails(eventId: string, at: LatLng): Promise<EventDetails> {
+    return callTool(this.deps, "scenes", "get_event_details", { eventId, latitude: at.lat, longitude: at.lng }, eventDetailsSchema);
+  }
+
+  /** Shows of one event at one venue. The window is a hint: Swiggy can return shows outside it, so callers filter. */
+  listEventShows(eventId: string, venueId: string, at: LatLng, window: { start: string; end: string }): Promise<EventShows> {
+    return callTool(
+      this.deps,
+      "scenes",
+      "list_event_shows",
+      { eventId, venueId, latitude: at.lat, longitude: at.lng, showStartTime: window.start, showEndTime: window.end },
+      eventShowsSchema,
+    );
   }
 }

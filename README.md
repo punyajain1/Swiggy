@@ -1,3 +1,58 @@
+# Tonight: Cook or Click + SideQuest
+
+One web app with two services behind one Swiggy login, like the service tabs in the Swiggy app. The home page (`/`) is a hub, and the header has a switcher.
+
+| Service | Route | Reads from |
+|---|---|---|
+| **Cook or Click**: cook it at home or order in? | `/cook-or-click` | Swiggy Food, Instamart |
+| **SideQuest**: plan any outing as a mini adventure | `/sidequest` | Swiggy Scenes, Dineout, Food, Instamart |
+
+To add a third service, add an entry to `frontend/components/services.tsx` and a route folder.
+
+## SideQuest
+
+Plan any outing, not just a meal: a night out, a date, a birthday, a stay-in game night. Try "I have ₹1,000, three friends, and 5 hours. Give us an interesting evening in Delhi." or "Stay-in game night for 5 in Pune, snacks and a late dinner."
+
+**Swiggy MCP is the only data source, and nothing depends on it.** Every quest tries all four services (Scenes, Dineout, Food, Instamart). Only a stay-in plan or an explicit "no" turns one off. The quest is built from whatever comes back, and if Swiggy has nothing (or is down) you still get a quest made of ideas. Free-form ideas only fill gaps: Swiggy's services rank above them when the planner chooses.
+
+The result includes a **"What Swiggy added"** panel with one tile per service: *In your quest*, *Left out* (had options, none fit your time or budget), *Nothing found*, *Unavailable* (the call failed) or *Not needed*. A tight budget can leave a service out. For example, a table for four at a ₹400-for-two restaurant is ₹800, so ₹1,000 can't also cover everything else, and the panel says which service was dropped.
+
+| Stop | Source | Used when |
+|---|---|---|
+| Event or show | Swiggy **Scenes** (real show times; ticket prices as the cheapest mix, e.g. one "Group Pass For 4" instead of four singles) | an out-and-social plan |
+| Dinner or drinks | Swiggy **Dineout** (rating, cost for two, "Top rated" / "Good value" labels, and a check that the restaurant takes tables at the planned time) | you're going out to eat |
+| Quest kit (snacks, props) | Swiggy **Instamart** (real prices, in-stock, fees) | every quest: a small kit when you're going out, a fuller one for stay-ins |
+| Late-night food | Swiggy **Food** (delivered to your saved address; one portion each, or one per two people when the budget is tight) | every quest, unless you say no food |
+| Walk, photo hunt, game round | **Ideas** written by Groq, tagged "Idea" in the UI | almost always |
+
+What the live Swiggy tools actually return (checked against the real servers, not just the docs):
+
+- **Dineout search and slots answer in text**, with `structuredContent: {}`. They are parsed in `backend/src/swiggy/textParsers.ts`, and the parsers throw on text they can't read, so a change in Swiggy's wording shows up as an error and not as "0 restaurants".
+- **Dineout gives no rating counts**, so there is no "underrated" claim. Labels are only "Top rated" (4.5★+) and "Good value" (4.2★+ at ₹1,200 for two or less).
+- **Dineout lists restaurants with no bookable slots.** Each shortlisted restaurant's tables are checked first, and the dinner is only placed inside its service hours.
+- **Scenes `discover_events` was empty for Delhi, Mumbai and Bengaluru**, so events come from `search_events`. It matches every city, so results are filtered to the quest's metro by their "Locality, City" text and by venue distance from the city centre, then by whether a show falls in your window.
+
+Ideas are not Swiggy data. The prompt forbids naming any business or venue and claiming hours, prices, crowds or weather, and alcohol or tobacco is filtered out in code. The UI says plainly that they are suggestions.
+
+How a request is handled:
+
+1. Groq reads the sentence: city, group size, budget, hours, start time, vibe, theme, and which services to use.
+2. The chosen sources run in parallel (Scenes then Dineout near the event venue; Food; ideas and the Instamart price check).
+3. The planner tries every combination of stops (at most 5), places them on the timeline (event at its show time, supplies first, delivery last, travel only when someone leaves home), drops what doesn't fit your hours, and penalises going over budget. Weights are in `backend/src/config/app.ts` under `sidequest`.
+4. Groq writes the story and a side challenge per chapter. If it fails, or writes a number it wasn't given, a plain template is used.
+
+SideQuest is read-only. It never books a table, buys a ticket, fills a cart or places an order. The Swiggy tools it can call are an allowlist in `backend/src/swiggy/callTool.ts` (Dineout: search and slots; Scenes: discover, collections and show listings; Instamart: product search), and tests check that no booking, cart or payment tool is on it.
+
+Limits to know about:
+
+- Swiggy addresses carry no coordinates, so the **city must be in your request** (or in your saved address). About 30 Indian cities are built in (`backend/src/sidequest/places.ts`).
+- Late-night food and Instamart orders go to your saved Swiggy address. If that is in another city, the quest warns you.
+- Travel times between stops are fixed estimates (30 min), and dinner cost is "cost for two" scaled to the group. Both are labelled estimates. In Delhi, a table for four is usually ₹2,000 or more, so a ₹1,000 budget leaves Dineout out and the coverage panel says so.
+- Instamart picks the best-matching in-stock item that is not a bulk pack and costs ₹250 or less, and with a budget the kit is trimmed to about 15% of it. Check the cart in the Swiggy app.
+- Dineout and Scenes are separate Swiggy MCP servers on the same OAuth login. **Reconnect Swiggy once** after upgrading, if the first SideQuest call is rejected.
+
+---
+
 # Cook or Click
 
 Type a craving like "butter chicken for 4, I've got 40 minutes". The app compares:
@@ -107,7 +162,7 @@ With `NODE_ENV` not set to `production` and Swiggy connected:
 
 - `GET /api/debug/addresses` — raw `get_addresses`
 - `GET /api/debug/search?server=food&q=butter%20chicken` — raw `search_menu` (`server=restaurants` for `search_restaurants`, `server=im` for Instamart `search_products`)
-- `GET /api/debug/tools?server=food` — each live tool's input schema
+- `GET /api/debug/tools?server=food` — each live tool's input schema (`food`, `im`, `dineout` or `scenes`; use `dineout` and `scenes` to check SideQuest's argument names)
 
 ## Manual smoke test against live Swiggy
 
