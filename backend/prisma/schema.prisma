@@ -1,0 +1,53 @@
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  moduleFormat           = "esm"
+  runtime                = "nodejs"
+  importFileExtension    = "js"
+  generatedFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SkillLevel {
+  beginner
+  average
+  confident
+}
+
+/// Single row (id = 1). Swiggy OAuth state for the one app user.
+/// Tokens are encrypted with AES-256-GCM before they are stored.
+model SwiggyAuth {
+  id                 Int       @id @default(1)
+  /// Client information from dynamic client registration.
+  clientInformation  Json?
+  /// Cached OAuth discovery metadata, so login doesn't re-discover every time.
+  discoveryState     Json?
+  accessTokenEnc     String?
+  refreshTokenEnc    String?
+  /// Non-secret token fields: token_type, scope, issuer.
+  tokenMeta          Json?
+  expiresAt          DateTime?
+  /// Temporary PKCE verifier and CSRF state for an in-progress login.
+  codeVerifier       String?
+  state              String?
+  stateCreatedAt     DateTime?
+  /// Set when a refresh fails and the user must log in again.
+  disconnectedReason String?
+  updatedAt          DateTime  @updatedAt
+}
+
+/// Single row (id = 1). User preferences and the selected delivery address.
+model Settings {
+  id              Int        @id @default(1)
+  addressId       String?
+  addressLine     String?
+  defaultServings Int        @default(2)
+  skillLevel      SkillLevel @default(average)
+  /// What an hour of the user's time is worth, in rupees.
+  hourlyTimeValue Int        @default(200)
+  hasBasicStaples Boolean    @default(true)
+  updatedAt       DateTime   @updatedAt
+}

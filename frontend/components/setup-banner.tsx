@@ -1,0 +1,55 @@
+"use client";
+
+import { MapPin, PlugZap, TriangleAlert } from "lucide-react";
+import Link from "next/link";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { buttonVariants } from "@/components/ui/button";
+import { api } from "@/lib/api";
+import { useAppState } from "./app-state";
+
+/** Tells the user what's missing (Swiggy login or an address) before they can compare. Renders nothing when ready. */
+export function SetupBanner() {
+  const { status, settings, error } = useAppState();
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <TriangleAlert />
+        <AlertTitle>Can&apos;t reach the backend</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+  if (!status || !settings) return null;
+
+  if (!status.connected) {
+    return (
+      <Alert variant="warning">
+        <PlugZap />
+        <AlertTitle>{status.needsReconnect ? "Your Swiggy session expired" : "Connect your Swiggy account"}</AlertTitle>
+        <AlertDescription>
+          <p>Cook or Click reads real prices from Swiggy Food and Instamart. You log in on Swiggy with your phone and an OTP.</p>
+          <a href={api.loginUrl()} className={buttonVariants({ size: "sm", className: "mt-2 w-fit" })}>
+            {status.needsReconnect ? "Reconnect Swiggy" : "Connect Swiggy"}
+          </a>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!settings.addressId) {
+    return (
+      <Alert variant="warning">
+        <MapPin />
+        <AlertTitle>Pick a delivery address</AlertTitle>
+        <AlertDescription>
+          <p>Prices and delivery times depend on where you are.</p>
+          <Link href="/settings" className={buttonVariants({ size: "sm", className: "mt-2 w-fit" })}>
+            Choose address
+          </Link>
+        </AlertDescription>
+      </Alert>
+    );
+  }
+  return null;
+}
