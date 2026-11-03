@@ -16,7 +16,7 @@ export function SetupBanner() {
       <Alert variant="destructive">
         <TriangleAlert />
         <AlertTitle>Can&apos;t reach the backend</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription className="break-words">{error}</AlertDescription>
       </Alert>
     );
   }
@@ -28,11 +28,11 @@ export function SetupBanner() {
         <PlugZap />
         <AlertTitle>{status.needsReconnect ? "Your Swiggy session expired" : "Connect your Swiggy account"}</AlertTitle>
         <AlertDescription>
-          <p>
+          <p className="break-words">
             Every service here reads live data from Swiggy (Food, Instamart, Dineout and Scenes) with one login. You log in on
             Swiggy with your phone and an OTP.
           </p>
-          <a href={api.loginUrl()} className={buttonVariants({ size: "sm", className: "mt-2 w-fit" })}>
+          <a href={api.loginUrl()} className={buttonVariants({ size: "sm", className: "mt-2 w-full sm:w-fit" })}>
             {status.needsReconnect ? "Reconnect Swiggy" : "Connect Swiggy"}
           </a>
         </AlertDescription>
@@ -46,8 +46,8 @@ export function SetupBanner() {
         <MapPin />
         <AlertTitle>Pick a delivery address</AlertTitle>
         <AlertDescription>
-          <p>Prices and delivery times depend on where you are.</p>
-          <Link href="/settings" className={buttonVariants({ size: "sm", className: "mt-2 w-fit" })}>
+          <p className="break-words">Prices and delivery times depend on where you are.</p>
+          <Link href="/settings" className={buttonVariants({ size: "sm", className: "mt-2 w-full sm:w-fit" })}>
             Choose address
           </Link>
         </AlertDescription>

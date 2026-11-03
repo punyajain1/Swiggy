@@ -1,4 +1,8 @@
-# Tonight: Cook or Click + SideQuest
+# OFFSCRIPT
+
+**Make plans. Break routines.**
+
+Cook or Click + SideQuest.
 
 One web app with two services behind one Swiggy login, like the service tabs in the Swiggy app. The home page (`/`) is a hub, and the header has a switcher.
 

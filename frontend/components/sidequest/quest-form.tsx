@@ -47,21 +47,21 @@ export function QuestForm({
             }
           }}
           disabled={disabled || loading}
-          className="w-full resize-none rounded-md border border-input bg-card px-3 py-2 text-base shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-quest focus-visible:ring-[3px] focus-visible:ring-quest/30 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full resize-none rounded-md border border-input bg-card px-3 py-2 text-sm sm:text-base shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-quest focus-visible:ring-[3px] focus-visible:ring-quest/30 disabled:cursor-not-allowed disabled:opacity-50"
         />
-        <Button type="submit" size="lg" disabled={!canSubmit} className="h-12 w-full bg-quest text-quest-foreground hover:bg-quest/90 sm:w-fit">
+        <Button type="submit" size="lg" disabled={!canSubmit} className="h-11 sm:h-12 w-full bg-quest text-quest-foreground hover:bg-quest/90 sm:w-fit">
           {loading ? <LoaderCircle className="animate-spin" /> : <Compass />}
           Start the quest
         </Button>
       </form>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2">
         {examples.map((ex) => (
           <button
             key={ex}
             type="button"
             disabled={disabled || loading}
             onClick={() => setText(ex)}
-            className="rounded-full border bg-card px-3 py-1 text-left text-xs text-muted-foreground transition-colors hover:border-quest hover:text-foreground disabled:opacity-50"
+            className="rounded-full border bg-card px-3 py-1 text-left text-xs text-muted-foreground transition-colors hover:border-quest hover:text-foreground disabled:opacity-50 break-words"
           >
             {ex}
           </button>

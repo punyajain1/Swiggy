@@ -37,11 +37,11 @@ export default function HomePage() {
   }
 
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6 sm:gap-8">
       <section className="grid gap-4">
         <div className="grid gap-2">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Cook it, or click it?</h1>
-          <p className="max-w-2xl text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">Cook it, or click it?</h1>
+          <p className="max-w-2xl text-sm sm:text-base text-muted-foreground">
             Tell us what you&apos;re craving. We price the ingredients on Instamart, check restaurants on Swiggy Food, and
             show you which is better for you tonight: money, time, effort and ratings.
           </p>
@@ -57,14 +57,14 @@ export default function HomePage() {
           <TriangleAlert />
           <AlertTitle>Couldn&apos;t compare that</AlertTitle>
           <AlertDescription>
-            <p>{error.message}</p>
-            <div className="mt-2 flex gap-2">
+            <p className="break-words">{error.message}</p>
+            <div className="mt-2 flex flex-wrap gap-2">
               {error.code === "SWIGGY_RECONNECT" || error.code === "SWIGGY_NOT_CONNECTED" ? (
-                <a href={api.loginUrl()} className={buttonVariants({ size: "sm" })}>
+                <a href={api.loginUrl()} className={buttonVariants({ size: "sm", className: "w-full sm:w-auto" })}>
                   Reconnect Swiggy
                 </a>
               ) : error.code === "BAD_REQUEST" || error.code === "NO_ADDRESS" ? null : (
-                <Button size="sm" variant="outline" onClick={() => void run(lastText)}>
+                <Button size="sm" variant="outline" onClick={() => void run(lastText)} className="w-full sm:w-auto">
                   <RefreshCw /> Try again
                 </Button>
               )}

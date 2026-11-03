@@ -90,22 +90,22 @@ export function QuestResults({ quest }: { quest: SideQuest }) {
       )}
 
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_320px]">
-        <section aria-label="Chapters" className="grid gap-0">
+        <section aria-label="Chapters" className="grid min-w-0 gap-0">
           <ol className="grid">
             {quest.chapters.map((c, i) => (
-              <li key={c.index} className="relative grid grid-cols-[2.5rem_1fr] gap-x-4">
+              <li key={c.index} className="relative grid grid-cols-[2rem_1fr] sm:grid-cols-[2.5rem_1fr] gap-x-2.5 sm:gap-x-4">
                 {/* Rail */}
                 <div className="flex flex-col items-center">
-                  {c.travelBeforeMin > 0 && <span className="h-14 w-px border-l-2 border-dashed border-quest/40" aria-hidden />}
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-quest font-bold text-quest-foreground">
+                  {c.travelBeforeMin > 0 && <span className="h-12 sm:h-14 w-px border-l-2 border-dashed border-quest/40" aria-hidden />}
+                  <span className="flex size-8 sm:size-10 shrink-0 items-center justify-center rounded-full bg-quest text-xs sm:text-base font-bold text-quest-foreground">
                     {i + 1}
                   </span>
                   {i < quest.chapters.length - 1 && <span className="w-px flex-1 border-l-2 border-dashed border-quest/40" aria-hidden />}
                 </div>
-                <div className="grid pb-6">
+                <div className="grid min-w-0 pb-6">
                   {c.travelBeforeMin > 0 && (
-                    <p className="flex h-14 items-center gap-2 text-xs text-muted-foreground">
-                      <Route className="size-3.5" /> About {minutes(c.travelBeforeMin)} to get there (estimate)
+                    <p className="flex h-12 sm:h-14 items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground break-words">
+                      <Route className="size-3.5 shrink-0" /> About {minutes(c.travelBeforeMin)} to get there (estimate)
                     </p>
                   )}
                   <ChapterCard chapter={c} done={done.has(c.index)} onToggle={() => toggle(c.index)} />
@@ -114,23 +114,23 @@ export function QuestResults({ quest }: { quest: SideQuest }) {
             ))}
           </ol>
           <Card className="border-quest/30 bg-quest-muted">
-            <CardContent className="flex items-start gap-3">
+            <CardContent className="flex items-start gap-3 p-4 sm:p-5">
               <Sparkles className="mt-0.5 size-5 shrink-0 text-quest" />
-              <div className="grid gap-1">
+              <div className="grid min-w-0 gap-1">
                 <p className="text-sm font-semibold">Finale</p>
-                <p className="text-sm">{quest.story.finale}</p>
+                <p className="text-xs sm:text-sm break-words">{quest.story.finale}</p>
               </div>
             </CardContent>
           </Card>
         </section>
 
-        <aside className="grid gap-6">
+        <aside className="grid gap-6 lg:sticky lg:top-24">
           <BudgetCard quest={quest} />
           <PlanB quest={quest} />
         </aside>
       </div>
 
-      <p className="flex items-start gap-2 text-xs text-muted-foreground">
+      <p className="flex items-start gap-2 text-xs text-muted-foreground break-words">
         <Info className="mt-0.5 size-3.5 shrink-0" />
         SideQuest doesn&apos;t book anything. Book the table on Dineout, tickets on Scenes and place the Instamart and food
         orders in the Swiggy app. Stops tagged &quot;Idea&quot; are AI suggestions, not Swiggy listings. Times between stops are
@@ -154,18 +154,18 @@ function CoveragePanel({ coverage }: { coverage: ServiceCoverage[] }) {
   return (
     <section aria-label="Swiggy services used" data-testid="coverage" className="grid gap-2">
       <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">What Swiggy added</h3>
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid gap-2.5 sm:gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {coverage.map((c) => {
           const s = STATUS[c.status] ?? STATUS.nothing_found;
           return (
             <li key={c.service} data-testid={`coverage-${c.service}`} className="grid gap-1 rounded-xl border bg-card p-3">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-medium">{c.service}</span>
-                <span className={cn("flex items-center gap-1.5 text-xs font-medium", s.text)}>
+                <span className="font-medium text-sm sm:text-base">{c.service}</span>
+                <span className={cn("flex shrink-0 items-center gap-1.5 text-xs font-medium", s.text)}>
                   <span className={cn("size-2 rounded-full", s.dot)} aria-hidden /> {s.label}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground break-words">
                 {c.role}: {c.note}
               </p>
             </li>
@@ -188,34 +188,34 @@ function QuestHero({ quest, completed }: { quest: SideQuest; completed: number }
   return (
     <section
       aria-label="Your quest"
-      className="grid gap-4 overflow-hidden rounded-2xl bg-gradient-to-br from-quest to-[oklch(0.35_0.15_285)] p-6 text-quest-foreground shadow-md"
+      className="grid gap-4 overflow-hidden rounded-2xl bg-gradient-to-br from-quest to-[oklch(0.35_0.15_285)] p-4 sm:p-6 text-quest-foreground shadow-md"
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="grid gap-1">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="grid min-w-0 flex-1 gap-1">
           <p className="text-xs font-medium uppercase tracking-widest opacity-80">Side quest unlocked</p>
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{quest.story.title}</h2>
-          <p className="max-w-2xl opacity-90">{quest.story.tagline}</p>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight break-words">{quest.story.title}</h2>
+          <p className="max-w-2xl text-xs sm:text-sm opacity-90 break-words">{quest.story.tagline}</p>
         </div>
-        <div className="rounded-xl bg-white/15 px-3 py-2 text-center" aria-label="Side challenges completed">
-          <p className="text-2xl font-bold tabular-nums">
+        <div className="self-start shrink-0 rounded-xl bg-white/15 px-3 py-2 text-center" aria-label="Side challenges completed">
+          <p className="text-xl sm:text-2xl font-bold tabular-nums">
             {completed}/{quest.chapters.length}
           </p>
           <p className="text-xs opacity-80">side challenges</p>
         </div>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2">
         {chips.map(({ icon: Icon, text }) => (
-          <span key={text} className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium">
-            <Icon className="size-3.5" /> {text}
+          <span key={text} className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 sm:px-3 py-1 text-xs font-medium">
+            <Icon className="size-3.5 shrink-0" /> <span className="break-words">{text}</span>
           </span>
         ))}
         {r.vibe.map((v) => (
-          <span key={v} className="rounded-full border border-white/30 px-3 py-1 text-xs">
+          <span key={v} className="rounded-full border border-white/30 px-2.5 sm:px-3 py-1 text-xs break-words">
             {v}
           </span>
         ))}
       </div>
-      {r.assumptions.length > 0 && <p className="text-xs opacity-80">We assumed: {r.assumptions.join(" ")}</p>}
+      {r.assumptions.length > 0 && <p className="text-xs opacity-80 break-words">We assumed: {r.assumptions.join(" ")}</p>}
     </section>
   );
 }
@@ -228,11 +228,11 @@ function ChapterCard({ chapter: c, done, onToggle }: { chapter: QuestChapter; do
   };
   const Icon = meta.icon;
   return (
-    <Card data-testid={`chapter-${c.stop.kind}`} className="gap-4 py-5">
-      <CardHeader className="gap-2 px-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-quest">
-            <Icon className="size-4" /> Chapter {c.index + 1} · {c.startLabel} – {c.endLabel}
+    <Card data-testid={`chapter-${c.stop.kind}`} className="gap-3 sm:gap-4 py-4 sm:py-5 min-w-0 overflow-hidden">
+      <CardHeader className="gap-1.5 sm:gap-2 px-3.5 sm:px-5">
+        <div className="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
+          <span className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium uppercase tracking-wide text-quest">
+            <Icon className="size-3.5 sm:size-4 shrink-0" /> Chapter {c.index + 1} · {c.startLabel} – {c.endLabel}
           </span>
           <Badge
             variant={c.stop.kind === "activity" ? "secondary" : "outline"}
@@ -241,10 +241,10 @@ function ChapterCard({ chapter: c, done, onToggle }: { chapter: QuestChapter; do
             {meta.source}
           </Badge>
         </div>
-        <CardTitle className="text-xl">{c.title}</CardTitle>
-        <CardDescription className="italic">{c.flavor}</CardDescription>
+        <CardTitle className="text-lg sm:text-xl break-words">{c.title}</CardTitle>
+        <CardDescription className="italic break-words text-xs sm:text-sm">{c.flavor}</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4 px-5">
+      <CardContent className="grid gap-3 sm:gap-4 px-3.5 sm:px-5">
         {c.stop.kind === "event" && <EventDetails stop={c.stop} />}
         {c.stop.kind === "dinner" && <DinnerDetails stop={c.stop} />}
         {c.stop.kind === "lateNight" && <LateNightDetails stop={c.stop} />}
@@ -256,21 +256,21 @@ function ChapterCard({ chapter: c, done, onToggle }: { chapter: QuestChapter; do
           onClick={onToggle}
           aria-pressed={done}
           className={cn(
-            "flex items-start gap-3 rounded-lg border border-dashed p-3 text-left text-sm transition-colors",
+            "flex items-start gap-2.5 sm:gap-3 rounded-lg border border-dashed p-2.5 sm:p-3 text-left text-xs sm:text-sm transition-colors",
             done ? "border-success/50 bg-success/10" : "border-quest/40 bg-quest-muted hover:border-quest",
           )}
         >
           <span
             className={cn(
-              "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border",
+              "mt-0.5 flex size-4.5 sm:size-5 shrink-0 items-center justify-center rounded border",
               done ? "border-success bg-success text-white" : "border-quest/60 bg-card",
             )}
           >
-            {done && <Check className="size-3.5" />}
+            {done && <Check className="size-3 sm:size-3.5" />}
           </span>
-          <span>
+          <span className="min-w-0 flex-1">
             <span className="block text-xs font-semibold uppercase tracking-wide text-quest">Side challenge</span>
-            <span className={cn(done && "line-through opacity-70")}>{c.challenge}</span>
+            <span className={cn("break-words", done && "line-through opacity-70")}>{c.challenge}</span>
           </span>
         </button>
       </CardContent>
@@ -279,13 +279,13 @@ function ChapterCard({ chapter: c, done, onToggle }: { chapter: QuestChapter; do
 }
 
 function Facts({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">{children}</div>;
+  return <div className="flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 text-xs text-muted-foreground">{children}</div>;
 }
 
 function Fact({ icon: Icon, children, className }: { icon: typeof Star; children: React.ReactNode; className?: string }) {
   return (
     <span className={cn("flex items-center gap-1", className)}>
-      <Icon className="size-3" /> {children}
+      <Icon className="size-3 shrink-0" /> <span className="break-words">{children}</span>
     </span>
   );
 }
@@ -298,15 +298,15 @@ function eventPrice(e: EventCandidate): string {
 
 function EventDetails({ stop: e }: { stop: EventStop }) {
   return (
-    <div className="grid gap-2 rounded-lg border bg-muted/40 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-semibold">{e.name}</p>
-          <p className="text-sm text-muted-foreground">{[e.venueName, e.area].filter(Boolean).join(" · ")}</p>
+    <div className="grid gap-2 rounded-lg border bg-muted/40 p-3 sm:p-4">
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-sm sm:text-base break-words">{e.name}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground break-words">{[e.venueName, e.area].filter(Boolean).join(" · ")}</p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="font-semibold tabular-nums">{e.costRs ? rupees(e.costRs) : eventPrice(e)}</p>
-          {e.costRs ? <p className="text-xs text-muted-foreground">{e.pricePerPersonRs ? `${rupees(e.pricePerPersonRs)} each` : null}</p> : null}
+          <p className="font-semibold tabular-nums text-sm sm:text-base">{e.costRs ? rupees(e.costRs) : eventPrice(e)}</p>
+          {e.costRs ? <p className="text-xs text-muted-foreground tabular-nums">{e.pricePerPersonRs ? `${rupees(e.pricePerPersonRs)} each` : null}</p> : null}
         </div>
       </div>
       <Facts>
@@ -341,22 +341,22 @@ function DinnerDetails({ stop: d }: { stop: DinnerStop }) {
   const slot = slotText(d.slot);
   const count = ratingCount(d.ratingCount);
   return (
-    <div className="grid gap-2 rounded-lg border bg-muted/40 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="flex flex-wrap items-center gap-2 font-semibold">
-            {d.name}
+    <div className="grid gap-2 rounded-lg border bg-muted/40 p-3 sm:p-4">
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="flex flex-wrap items-center gap-1.5 sm:gap-2 font-semibold text-sm sm:text-base break-words">
+            <span>{d.name}</span>
             {d.badge && (
               <Badge variant="success">
                 <Award /> {d.badge}
               </Badge>
             )}
           </p>
-          <p className="text-sm text-muted-foreground">{[d.cuisines.slice(0, 3).join(", "), d.locality].filter(Boolean).join(" · ")}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground break-words">{[d.cuisines.slice(0, 3).join(", "), d.locality].filter(Boolean).join(" · ")}</p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="font-semibold tabular-nums">{rupees(d.costRs)}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="font-semibold tabular-nums text-sm sm:text-base">{rupees(d.costRs)}</p>
+          <p className="text-xs text-muted-foreground tabular-nums">
             {rupees(d.costForTwoRs)} for two{d.costForTwoKnown ? "" : " (guess)"} · est.
           </p>
         </div>
@@ -375,10 +375,10 @@ function DinnerDetails({ stop: d }: { stop: DinnerStop }) {
           </Fact>
         ))}
       </Facts>
-      {d.highlights.length > 0 && <p className="text-xs text-muted-foreground">{d.highlights.join(" · ")}</p>}
+      {d.highlights.length > 0 && <p className="text-xs text-muted-foreground break-words">{d.highlights.join(" · ")}</p>}
       <p
         className={cn(
-          "text-sm",
+          "text-xs sm:text-sm break-words",
           slot.tone === "ok" && "text-success",
           slot.tone === "warn" && "text-warning",
           slot.tone === "muted" && "text-muted-foreground",
@@ -392,19 +392,19 @@ function DinnerDetails({ stop: d }: { stop: DinnerStop }) {
 
 function LateNightDetails({ stop: f }: { stop: LateNightStop }) {
   return (
-    <div className="grid gap-2 rounded-lg border bg-muted/40 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-semibold">
+    <div className="grid gap-2 rounded-lg border bg-muted/40 p-3 sm:p-4">
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-sm sm:text-base break-words">
             {f.quantity} × {f.dish}
-            {f.isVeg === true && <span className="ml-1 text-sm font-normal text-success">· veg</span>}
-            {f.shared && <span className="ml-1 text-sm font-normal text-muted-foreground">· to share</span>}
+            {f.isVeg === true && <span className="ml-1 text-xs sm:text-sm font-normal text-success">· veg</span>}
+            {f.shared && <span className="ml-1 text-xs sm:text-sm font-normal text-muted-foreground">· to share</span>}
           </p>
-          <p className="text-sm text-muted-foreground">{f.restaurantName}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground break-words">{f.restaurantName}</p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="font-semibold tabular-nums">{rupees(f.costRs)}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="font-semibold tabular-nums text-sm sm:text-base">{rupees(f.costRs)}</p>
+          <p className="text-xs text-muted-foreground tabular-nums">
             {rupees(f.itemTotalRs)} + {rupees(f.feesRs)} fees · est.
           </p>
         </div>
@@ -421,15 +421,15 @@ function LateNightDetails({ stop: f }: { stop: LateNightStop }) {
 
 function ActivityDetails({ stop: a }: { stop: ActivityStop }) {
   return (
-    <div className="grid gap-2 rounded-lg border bg-muted/40 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-semibold">{a.title}</p>
-          <p className="text-sm text-muted-foreground">{a.what}</p>
+    <div className="grid gap-2 rounded-lg border bg-muted/40 p-3 sm:p-4">
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-sm sm:text-base break-words">{a.title}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground break-words">{a.what}</p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="font-semibold tabular-nums">{a.costRs === 0 ? "Free" : rupees(a.costRs)}</p>
-          {a.costRs > 0 && <p className="text-xs text-muted-foreground">{rupees(a.costPerPersonRs)} each · guess</p>}
+          <p className="font-semibold tabular-nums text-sm sm:text-base">{a.costRs === 0 ? "Free" : rupees(a.costRs)}</p>
+          {a.costRs > 0 && <p className="text-xs text-muted-foreground tabular-nums">{rupees(a.costPerPersonRs)} each · guess</p>}
         </div>
       </div>
       <Facts>
@@ -445,23 +445,23 @@ function ActivityDetails({ stop: a }: { stop: ActivityStop }) {
 
 function SuppliesDetails({ stop: s }: { stop: SuppliesStop }) {
   return (
-    <div className="grid gap-2 rounded-lg border bg-muted/40 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-semibold">Instamart order</p>
-          <p className="text-sm text-muted-foreground">Order before you head out. Prices are from Instamart.</p>
+    <div className="grid gap-2 rounded-lg border bg-muted/40 p-3 sm:p-4">
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-sm sm:text-base">Instamart order</p>
+          <p className="text-xs sm:text-sm text-muted-foreground break-words">Order before you head out. Prices are from Instamart.</p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="font-semibold tabular-nums">{rupees(s.costRs)}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="font-semibold tabular-nums text-sm sm:text-base">{rupees(s.costRs)}</p>
+          <p className="text-xs text-muted-foreground tabular-nums">
             {rupees(s.itemTotalRs)} + {rupees(s.feesRs)} fees · est.
           </p>
         </div>
       </div>
-      <ul className="grid gap-1 text-sm">
+      <ul className="grid gap-1.5 sm:gap-1 text-xs sm:text-sm">
         {s.lines.map((l) => (
-          <li key={l.want} className="flex items-start justify-between gap-3">
-            <span className="min-w-0">
+          <li key={l.want} className="flex items-start justify-between gap-2 sm:gap-3">
+            <span className="min-w-0 flex-1 break-words">
               {l.quantity} × {l.name}
               {l.pack ? <span className="text-xs text-muted-foreground"> · {l.pack}</span> : null}
             </span>
@@ -469,7 +469,7 @@ function SuppliesDetails({ stop: s }: { stop: SuppliesStop }) {
           </li>
         ))}
       </ul>
-      {s.missing.length > 0 && <p className="text-xs text-warning">Not found on Instamart near you: {s.missing.join(", ")}.</p>}
+      {s.missing.length > 0 && <p className="text-xs text-warning break-words">Not found on Instamart near you: {s.missing.join(", ")}.</p>}
     </div>
   );
 }
@@ -487,7 +487,7 @@ function BudgetCard({ quest }: { quest: SideQuest }) {
       </CardHeader>
       <CardContent className="grid gap-4">
         <div className="grid gap-2">
-          <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline justify-between gap-2">
             <span className="text-2xl font-bold tabular-nums">{rupees(b.totalRs)}</span>
             {b.limitRs !== null && <span className="text-sm text-muted-foreground">of {rupees(b.limitRs)}</span>}
           </div>
@@ -496,7 +496,7 @@ function BudgetCard({ quest }: { quest: SideQuest }) {
               <div className={cn("h-full rounded-full", b.overByRs ? "bg-warning" : "bg-success")} style={{ width: `${share}%` }} />
             </div>
           )}
-          <p className={cn("text-sm", b.overByRs ? "text-warning" : "text-muted-foreground")}>
+          <p className={cn("text-xs sm:text-sm break-words", b.overByRs ? "text-warning" : "text-muted-foreground")}>
             {b.overByRs
               ? `${rupees(b.overByRs)} over budget`
               : b.limitRs !== null
@@ -506,10 +506,10 @@ function BudgetCard({ quest }: { quest: SideQuest }) {
             {rupees(b.perPersonRs)} each
           </p>
         </div>
-        <ul className="grid gap-2 text-sm">
+        <ul className="grid gap-2 text-xs sm:text-sm">
           {b.lines.map((l) => (
-            <li key={l.label} className="flex items-start justify-between gap-3">
-              <span className="min-w-0 text-muted-foreground">{l.label}</span>
+            <li key={l.label} className="flex items-start justify-between gap-2 sm:gap-3">
+              <span className="min-w-0 flex-1 break-words text-muted-foreground">{l.label}</span>
               <span className="shrink-0 tabular-nums">
                 {l.costRs === 0 ? "Free" : rupees(l.costRs)}
                 {l.estimated && l.costRs > 0 ? <span className="text-xs text-muted-foreground"> est.</span> : null}
@@ -531,7 +531,7 @@ function PlanB({ quest }: { quest: SideQuest }) {
         <CardTitle>Plan B</CardTitle>
         <CardDescription>Other good options if a stop is full or closed.</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-4 text-sm">
+      <CardContent className="grid gap-4 text-xs sm:text-sm">
         {events.length > 0 && (
           <AltGroup title="Events" items={events.map((e: EventCandidate) => ({
             key: `${e.eventId}-${e.showStartMs}`,
@@ -572,8 +572,8 @@ function AltGroup({ title, items }: { title: string; items: Array<{ key: string;
       <ul className="grid gap-2">
         {items.map((i) => (
           <li key={i.key}>
-            <p className="font-medium">{i.name}</p>
-            <p className="text-xs text-muted-foreground">{i.detail}</p>
+            <p className="font-medium break-words">{i.name}</p>
+            <p className="text-xs text-muted-foreground break-words">{i.detail}</p>
           </li>
         ))}
       </ul>

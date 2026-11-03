@@ -31,23 +31,23 @@ export function ProgressSteps() {
         <CardContent>
           <ol className="grid gap-3">
             {steps.map((label, i) => (
-              <li key={label} className={cn("flex items-center gap-3 text-sm", i > current && "text-muted-foreground/60")}>
+              <li key={label} className={cn("flex items-start gap-3 text-sm", i > current && "text-muted-foreground/60")}>
                 {i < current ? (
-                  <Check className="size-4 text-success" />
+                  <Check className="mt-0.5 size-4 shrink-0 text-success" />
                 ) : i === current ? (
-                  <LoaderCircle className="size-4 animate-spin text-primary" />
+                  <LoaderCircle className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
                 ) : (
-                  <span className="size-4 rounded-full border" />
+                  <span className="mt-0.5 size-4 shrink-0 rounded-full border" />
                 )}
-                {label}
+                <span className="leading-snug">{label}</span>
               </li>
             ))}
           </ol>
         </CardContent>
       </Card>
       <div className="grid gap-6 lg:grid-cols-2">
-        <Skeleton className="h-80" />
-        <Skeleton className="h-80" />
+        <Skeleton className="h-64 sm:h-80" />
+        <Skeleton className="h-64 sm:h-80" />
       </div>
     </div>
   );

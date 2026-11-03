@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 export function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
-    <div className="relative w-full overflow-x-auto">
+    <div className="relative w-full overflow-x-auto overscroll-x-contain">
       <table data-slot="table" className={cn("w-full caption-bottom text-sm", className)} {...props} />
     </div>
   );
@@ -24,12 +24,12 @@ export function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
 export function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   return (
     <th
-      className={cn("h-10 px-3 text-left align-middle font-medium whitespace-nowrap text-muted-foreground", className)}
+      className={cn("h-9 sm:h-10 px-2.5 sm:px-3 text-left align-middle font-medium whitespace-nowrap text-xs sm:text-sm text-muted-foreground", className)}
       {...props}
     />
   );
 }
 
 export function TableCell({ className, ...props }: React.ComponentProps<"td">) {
-  return <td className={cn("p-3 align-middle", className)} {...props} />;
+  return <td className={cn("p-2.5 sm:p-3 align-middle text-xs sm:text-sm", className)} {...props} />;
 }

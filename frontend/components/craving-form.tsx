@@ -40,21 +40,21 @@ export function CravingForm({
           maxLength={300}
           onChange={(e) => setText(e.target.value)}
           disabled={disabled || loading}
-          className="h-12 text-base md:text-base"
+          className="h-11 sm:h-12 text-sm sm:text-base flex-1"
         />
-        <Button type="submit" size="lg" disabled={!canSubmit} className="h-12">
+        <Button type="submit" size="lg" disabled={!canSubmit} className="h-11 sm:h-12 w-full sm:w-auto sm:shrink-0">
           {loading ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
           Cook or Click?
         </Button>
       </form>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2">
         {examples.map((ex) => (
           <button
             key={ex}
             type="button"
             disabled={disabled || loading}
             onClick={() => setText(ex)}
-            className="rounded-full border bg-card px-3 py-1 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-50"
+            className="rounded-full border bg-card px-3 py-1 text-left text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground disabled:opacity-50 break-words"
           >
             {ex}
           </button>

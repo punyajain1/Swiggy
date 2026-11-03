@@ -37,8 +37,8 @@ export function SettingsView() {
       {status && !status.connected && <SetupBanner />}
       <Card>
         <CardHeader>
-          <CardTitle>Your preferences</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xl sm:text-2xl">Your preferences</CardTitle>
+          <CardDescription className="break-words text-xs sm:text-sm">
             Shared by every service. Your address is where food is delivered (Cook or Click, and SideQuest&apos;s late-night
             stop). The rest shapes Cook or Click&apos;s comparisons, and your default servings is SideQuest&apos;s group size
             when you don&apos;t say one.

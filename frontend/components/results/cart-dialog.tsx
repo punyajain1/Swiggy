@@ -100,10 +100,10 @@ export function CartDialog({
               </ul>
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={onClose} disabled={phase.name === "loading"}>
+              <Button variant="outline" onClick={onClose} disabled={phase.name === "loading"} className="w-full sm:w-auto">
                 Cancel
               </Button>
-              <Button onClick={() => void fill()} disabled={phase.name === "loading"}>
+              <Button onClick={() => void fill()} disabled={phase.name === "loading"} className="w-full sm:w-auto">
                 {phase.name === "loading" && <LoaderCircle className="animate-spin" />}
                 Replace cart and fill
               </Button>
@@ -119,11 +119,11 @@ export function CartDialog({
             </DialogHeader>
             <DialogFooter>
               {phase.session ? (
-                <a href={api.loginUrl()} className={buttonVariants()}>
+                <a href={api.loginUrl()} className={cn(buttonVariants(), "w-full sm:w-auto")}>
                   Reconnect Swiggy
                 </a>
               ) : (
-                <Button onClick={() => void fill()}>Try again</Button>
+                <Button onClick={() => void fill()} className="w-full sm:w-auto">Try again</Button>
               )}
             </DialogFooter>
           </>
@@ -147,30 +147,30 @@ function CartBill({ result, onClose }: { result: CartResult; onClose: () => void
         <DialogDescription>{result.title}. These are Swiggy&apos;s real numbers.</DialogDescription>
       </DialogHeader>
 
-      <ul className="grid gap-1 text-sm">
+      <ul className="grid gap-1.5 sm:gap-1 text-xs sm:text-sm">
         {result.items.map((i, idx) => (
-          <li key={`${i.name}-${idx}`} className="flex justify-between gap-3">
-            <span>
+          <li key={`${i.name}-${idx}`} className="flex justify-between gap-2 sm:gap-3">
+            <span className="min-w-0 flex-1 break-words">
               {i.quantity} × {i.name}
               {i.detail ? <span className="text-muted-foreground"> ({i.detail})</span> : null}
             </span>
-            {i.price && <span className="tabular-nums">{i.price}</span>}
+            {i.price && <span className="shrink-0 tabular-nums">{i.price}</span>}
           </li>
         ))}
       </ul>
 
       {result.bill.length > 0 && (
-        <div className="grid gap-1 border-t pt-3 text-sm text-muted-foreground">
+        <div className="grid gap-1 border-t pt-3 text-xs sm:text-sm text-muted-foreground">
           {result.bill.map((b) => (
-            <div key={b.label} className="flex justify-between">
-              <span>{b.label}</span>
-              <span className="tabular-nums">{b.value}</span>
+            <div key={b.label} className="flex justify-between gap-2">
+              <span className="min-w-0 flex-1 break-words">{b.label}</span>
+              <span className="shrink-0 tabular-nums">{b.value}</span>
             </div>
           ))}
         </div>
       )}
 
-      <div className="grid gap-1 rounded-lg bg-muted/60 p-3 text-sm">
+      <div className="grid gap-1 rounded-lg bg-muted/60 p-3 text-xs sm:text-sm">
         <div className="flex justify-between font-semibold">
           <span>To pay</span>
           <span className="tabular-nums">{result.toPay !== null ? rupees(result.toPay) : "Not reported"}</span>
@@ -187,7 +187,7 @@ function CartBill({ result, onClose }: { result: CartResult; onClose: () => void
       </div>
 
       {result.coupon && (
-        <p className="text-sm text-success">
+        <p className="text-xs sm:text-sm text-success break-words">
           Coupon {result.coupon.code} applied: −{rupees(result.coupon.discount)}
         </p>
       )}
@@ -195,16 +195,16 @@ function CartBill({ result, onClose }: { result: CartResult; onClose: () => void
       {result.warnings.length > 0 && (
         <ul className="grid gap-1 text-xs text-muted-foreground">
           {result.warnings.map((w) => (
-            <li key={w} className="flex gap-2">
-              <TriangleAlert className="size-3.5 shrink-0 text-warning" /> {w}
+            <li key={w} className="flex gap-2 break-words">
+              <TriangleAlert className="size-3.5 shrink-0 text-warning" /> <span>{w}</span>
             </li>
           ))}
         </ul>
       )}
 
-      <p className="text-sm font-medium">Open the Swiggy app to review and place your order.</p>
+      <p className="text-xs sm:text-sm font-medium">Open the Swiggy app to review and place your order.</p>
       <DialogFooter>
-        <Button onClick={onClose}>Done</Button>
+        <Button onClick={onClose} className="w-full sm:w-auto">Done</Button>
       </DialogFooter>
     </>
   );

@@ -1,7 +1,7 @@
 import type { AxiosInstance } from "axios";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { GroqClient } from "../src/ai/groq.js";
+import { GroqClient, parseRetryDelayMs } from "../src/ai/groq.js";
 import { parseIntent } from "../src/ai/tasks.js";
 import { FakeLlm, settings } from "./helpers.js";
 
@@ -106,5 +106,69 @@ describe("parseIntent", () => {
   it("rejects text that isn't a food request", async () => {
     const llm = new FakeLlm({ parseIntent: reply({ isFoodRequest: false, dishes: [] }) });
     await expect(parseIntent(llm, "what's the weather", settings())).rejects.toMatchObject({ status: 400 });
+  });
+});
+
+describe("Groq rate limits (429)", () => {
+  const limited = (message: string, headers: Record<string, string> = {}) =>
+    Object.assign(new Error("429"), { isAxiosError: true, response: { status: 429, data: { error: { message } }, headers } });
+  const MSG = "Rate limit reached for model `openai/gpt-oss-120b` on tokens per minute (TPM): Limit 8000, Used 6601, Requested 1444. Please try again in 337.499999ms.";
+  const withSleep = (post: ReturnType<typeof vi.fn>, extra: Record<string, unknown> = {}) => {
+    const waits: number[] = [];
+    const c = new GroqClient({
+      apiKey: "k",
+      model: "openai/gpt-oss-120b",
+      http: { post } as unknown as AxiosInstance,
+      sleepFn: async (ms) => void waits.push(ms),
+      ...extra,
+    });
+    return { c, waits };
+  };
+
+  it("reads the wait Groq asks for, in every format it uses", () => {
+    expect(parseRetryDelayMs(undefined, "Please try again in 337.499999ms.")).toBe(337);
+    expect(parseRetryDelayMs(undefined, "Please try again in 2.5s.")).toBe(2500);
+    expect(parseRetryDelayMs(undefined, "Please try again in 1m2.5s.")).toBe(62_500);
+    expect(parseRetryDelayMs("3", "no hint here")).toBe(3000);
+    expect(parseRetryDelayMs(undefined, "nothing useful")).toBeUndefined();
+  });
+
+  it("waits as long as Groq says, then retries and succeeds (the case from the logs)", async () => {
+    const post = vi.fn().mockRejectedValueOnce(limited(MSG)).mockResolvedValueOnce(reply('{"dish":"Dal","servings":2}'));
+    const { c, waits } = withSleep(post);
+    await expect(c.json({ task: "t", system: "s", user: "u", schema })).resolves.toEqual({ dish: "Dal", servings: 2 });
+    expect(post).toHaveBeenCalledTimes(2);
+    expect(waits).toEqual([337 + 250]);
+  });
+
+  it("keeps waiting across several 429s, up to the attempt limit", async () => {
+    const post = vi.fn().mockRejectedValue(limited(MSG));
+    const { c, waits } = withSleep(post, { maxRateLimitAttempts: 3 });
+    await expect(c.json({ task: "t", system: "s", user: "u", schema })).rejects.toMatchObject({ code: "GROQ_ERROR" });
+    expect(post).toHaveBeenCalledTimes(3);
+    expect(waits).toHaveLength(2);
+  });
+
+  it("doesn't hang: a wait longer than the budget fails at once and says how long to wait", async () => {
+    const post = vi.fn().mockRejectedValue(limited("Please try again in 1m2.5s."));
+    const { c, waits } = withSleep(post);
+    await expect(c.json({ task: "t", system: "s", user: "u", schema })).rejects.toThrow(/Try again in 63 s/);
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(waits).toEqual([]);
+  });
+
+  it("uses the retry-after header when there is one", async () => {
+    const post = vi.fn().mockRejectedValueOnce(limited("limit", { "retry-after": "2" })).mockResolvedValueOnce(reply('{"dish":"Dal","servings":1}'));
+    const { c, waits } = withSleep(post);
+    await c.json({ task: "t", system: "s", user: "u", schema });
+    expect(waits).toEqual([2250]);
+  });
+
+  it("other errors are not retried", async () => {
+    const err = Object.assign(new Error("500"), { isAxiosError: true, response: { status: 500, data: { error: { message: "boom" } }, headers: {} } });
+    const post = vi.fn().mockRejectedValue(err);
+    const { c } = withSleep(post);
+    await expect(c.json({ task: "t", system: "s", user: "u", schema })).rejects.toThrow(/boom/);
+    expect(post).toHaveBeenCalledTimes(1);
   });
 });

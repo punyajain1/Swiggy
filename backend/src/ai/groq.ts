@@ -24,15 +24,48 @@ export interface JsonLlm {
 }
 
 /**
+ * How long Groq asks us to wait after a 429, in ms. It sends a `retry-after` header (seconds) and
+ * also says it in the message: "Please try again in 337.499999ms", "in 2.5s" or "in 1m2.5s".
+ */
+export function parseRetryDelayMs(retryAfterHeader: unknown, message: string): number | undefined {
+  const header = Number(retryAfterHeader);
+  if (retryAfterHeader !== undefined && retryAfterHeader !== null && retryAfterHeader !== "" && Number.isFinite(header) && header >= 0) {
+    return Math.round(header * 1000);
+  }
+  const m = /try again in\s+((?:\d+(?:\.\d+)?\s*[hms]+\s*)+)/i.exec(message);
+  if (!m) return undefined;
+  let ms = 0;
+  for (const part of m[1]!.matchAll(/(\d+(?:\.\d+)?)\s*(ms|h|m|s)/gi)) {
+    const n = Number(part[1]);
+    const unit = part[2]!.toLowerCase();
+    ms += unit === "ms" ? n : unit === "s" ? n * 1000 : unit === "m" ? n * 60_000 : n * 3_600_000;
+  }
+  return ms > 0 ? Math.round(ms) : undefined;
+}
+
+/**
  * Groq client over its OpenAI-compatible REST API, using axios and JSON mode.
- * If the reply isn't valid JSON or fails the schema, it retries once and tells the
- * model exactly what was wrong.
+ * - If the reply isn't valid JSON or fails the schema, it retries once and tells the
+ *   model exactly what was wrong.
+ * - On a 429 (rate limit) it waits as long as Groq says and tries again, up to a few times and a
+ *   total wait budget, since limits are per minute and a short wait usually clears them. If the wait
+ *   is longer than the budget it gives up at once, so the request doesn't hang.
  */
 export class GroqClient implements JsonLlm {
   private readonly http: AxiosInstance;
 
   constructor(
-    private readonly opts: { apiKey: string; model: string; timeoutMs?: number; http?: AxiosInstance },
+    private readonly opts: {
+      apiKey: string;
+      model: string;
+      timeoutMs?: number;
+      http?: AxiosInstance;
+      /** Most times one call is sent when Groq keeps answering 429. Default 4. */
+      maxRateLimitAttempts?: number;
+      /** Most total time spent waiting on 429s for one call. Default 20 s. */
+      rateLimitBudgetMs?: number;
+      sleepFn?: (ms: number) => Promise<void>;
+    },
   ) {
     this.http =
       opts.http ??
@@ -45,31 +78,51 @@ export class GroqClient implements JsonLlm {
 
   private async complete(messages: ChatMessage[], temperature: number, maxTokens: number): Promise<string> {
     const isReasoningModel = this.opts.model.startsWith("openai/gpt-oss");
-    try {
-      const res = await this.http.post("/chat/completions", {
-        model: this.opts.model,
-        messages,
-        temperature,
-        max_completion_tokens: maxTokens,
-        response_format: { type: "json_object" },
-        // gpt-oss models reason before answering; keep it short and out of the reply.
-        ...(isReasoningModel ? { reasoning_effort: "low", include_reasoning: false } : {}),
-      });
-      const content: unknown = res.data?.choices?.[0]?.message?.content;
-      if (typeof content !== "string" || !content.trim()) throw new Error("empty reply");
-      return content;
-    } catch (err) {
-      if (isAxiosError(err)) {
-        const status = err.response?.status;
-        const message =
-          (err.response?.data as { error?: { message?: string } } | undefined)?.error?.message ?? err.message;
-        logger.warn({ status, message }, "Groq request failed");
-        if (status === 401) throw errors.upstream("groq", "Groq rejected the API key. Check GROQ_API_KEY.");
-        if (status === 429) throw errors.upstream("groq", "Groq rate limit reached. Try again in a minute.");
-        if (status === 400 && /json/i.test(message)) return ""; // JSON-mode generation failure: let the caller retry.
-        throw errors.upstream("groq", `Groq request failed: ${message}`);
+    const maxAttempts = this.opts.maxRateLimitAttempts ?? 4;
+    const budgetMs = this.opts.rateLimitBudgetMs ?? 20_000;
+    const sleepFn = this.opts.sleepFn ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+    let waitedMs = 0;
+
+    for (let attempt = 1; ; attempt++) {
+      try {
+        const res = await this.http.post("/chat/completions", {
+          model: this.opts.model,
+          messages,
+          temperature,
+          max_completion_tokens: maxTokens,
+          response_format: { type: "json_object" },
+          // gpt-oss models reason before answering; keep it short and out of the reply.
+          ...(isReasoningModel ? { reasoning_effort: "low", include_reasoning: false } : {}),
+        });
+        const content: unknown = res.data?.choices?.[0]?.message?.content;
+        if (typeof content !== "string" || !content.trim()) throw new Error("empty reply");
+        return content;
+      } catch (err) {
+        if (isAxiosError(err)) {
+          const status = err.response?.status;
+          const message =
+            (err.response?.data as { error?: { message?: string } } | undefined)?.error?.message ?? err.message;
+          if (status === 429) {
+            const asked = parseRetryDelayMs(err.response?.headers?.["retry-after"], message);
+            // A little extra so the wait isn't cut exactly at the edge of the window.
+            const wait = Math.min(60_000, (asked ?? 2000) + 250);
+            if (attempt < maxAttempts && waitedMs + wait <= budgetMs) {
+              logger.info({ attempt, waitMs: wait, message }, "Groq rate limit; waiting then retrying");
+              waitedMs += wait;
+              await sleepFn(wait);
+              continue;
+            }
+            logger.warn({ status, attempt, waitedMs, asked, message }, "Groq rate limit; giving up");
+            const when = asked !== undefined ? ` Try again in ${Math.max(1, Math.ceil(asked / 1000))} s.` : " Try again in a minute.";
+            throw errors.upstream("groq", `Groq is rate-limiting this app.${when}`);
+          }
+          logger.warn({ status, message }, "Groq request failed");
+          if (status === 401) throw errors.upstream("groq", "Groq rejected the API key. Check GROQ_API_KEY.");
+          if (status === 400 && /json/i.test(message)) return ""; // JSON-mode generation failure: let the caller retry.
+          throw errors.upstream("groq", `Groq request failed: ${message}`);
+        }
+        throw errors.upstream("groq", `Groq request failed: ${(err as Error).message}`);
       }
-      throw errors.upstream("groq", `Groq request failed: ${(err as Error).message}`);
     }
   }
 

@@ -75,32 +75,32 @@ function RestaurantOption({
   const single = o.items[0];
 
   return (
-    <div data-testid={`restaurant-${o.id}`} className={cn("grid gap-3 rounded-lg border p-4", highlight && "bg-muted/40")}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-semibold">{o.restaurantName}</p>
+    <div data-testid={`restaurant-${o.id}`} className={cn("grid gap-3 rounded-lg border p-3.5 sm:p-4", highlight && "bg-muted/40")}>
+      <div className="flex items-start justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold text-sm sm:text-base break-words">{o.restaurantName}</p>
           {!multi && single && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground break-words">
               {lineText(single)}
               {single.isVeg === true && <span className="ml-1 text-success">· veg</span>}
             </p>
           )}
         </div>
         <div className="shrink-0 text-right">
-          <p className="font-semibold tabular-nums">{rupees(o.estTotal)}</p>
+          <p className="font-semibold tabular-nums text-sm sm:text-base">{rupees(o.estTotal)}</p>
           <p className="text-xs text-muted-foreground tabular-nums">{rupees(o.costPerServing)}/serving · est.</p>
         </div>
       </div>
 
       {multi && (
-        <ul className="grid gap-1 text-sm">
+        <ul className="grid gap-1.5 sm:gap-1 text-xs sm:text-sm">
           {o.items.map((l) => (
-            <li key={l.menuItemId} className="flex items-start justify-between gap-3">
-              <span className="min-w-0">
+            <li key={l.menuItemId} className="flex items-start justify-between gap-2 sm:gap-3">
+              <span className="min-w-0 flex-1 break-words">
                 {lineText(l)}
                 {l.isVeg === true && <span className="ml-1 text-success">· veg</span>}
                 {l.rating ? (
-                  <span className="ml-2 text-xs text-muted-foreground">
+                  <span className="ml-2 inline-block text-xs text-muted-foreground whitespace-nowrap">
                     {stars(l.rating)}
                     {l.ratingCountLabel ? ` (${l.ratingCountLabel})` : ""}
                   </span>
@@ -113,12 +113,12 @@ function RestaurantOption({
       )}
 
       {o.missingDishes.length > 0 && (
-        <p className="text-xs text-warning">
+        <p className="break-words text-xs text-warning">
           Doesn&apos;t have {o.missingDishes.join(", ")}. The price doesn&apos;t include {o.missingDishes.length === 1 ? "it" : "them"}.
         </p>
       )}
 
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+      <div className="flex flex-wrap gap-x-3 sm:gap-x-4 gap-y-1 text-xs text-muted-foreground">
         {dish && (
           <span className="flex items-center gap-1">
             <Star className="size-3 fill-current text-warning" /> {dish} dish
@@ -154,6 +154,7 @@ function RestaurantOption({
         variant={primary ? "default" : "outline"}
         onClick={() => onFillCart(o)}
         aria-label={`Fill Food cart from ${o.restaurantName}`}
+        className="w-full sm:w-auto"
       >
         <ShoppingCart /> Fill Food cart
       </Button>

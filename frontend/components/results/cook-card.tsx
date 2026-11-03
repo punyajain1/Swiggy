@@ -43,8 +43,8 @@ export function CookCard({
         <CardDescription>Ingredients from Instamart, cooked by you.</CardDescription>
       </CardHeader>
 
-      <CardContent className="grid gap-5">
-        <div className="flex flex-wrap gap-2 text-xs">
+      <CardContent className="grid gap-4 sm:gap-5">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 text-xs">
           <Badge variant="secondary">
             <Clock /> {minutes(cook.activeMin)} hands-on
           </Badge>
@@ -56,23 +56,23 @@ export function CookCard({
           </Badge>
         </div>
 
-        <ul className="grid gap-2 text-sm">
+        <ul className="grid gap-2.5 sm:gap-2 text-sm">
           {cook.lines.map((l) => (
-            <li key={l.ingredient} className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="font-medium">
+            <li key={l.ingredient} className="flex items-start justify-between gap-2 sm:gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm sm:text-base break-words">
                   {l.ingredient} <span className="font-normal text-muted-foreground">· need {l.need.display}</span>
                 </p>
                 {l.status === "matched" ? (
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className="break-words text-xs text-muted-foreground">
                     {l.packs.map((p) => `${p.quantity} × ${p.label}`).join(" + ")} · {l.product?.name}
                   </p>
                 ) : (
                   <p className="text-xs text-warning">Not on Instamart near you</p>
                 )}
-                {l.note && l.status === "matched" && <p className="text-xs text-muted-foreground">{l.note}</p>}
+                {l.note && l.status === "matched" && <p className="break-words text-xs text-muted-foreground">{l.note}</p>}
               </div>
-              <span className={cn("shrink-0 tabular-nums", l.estimated && "text-muted-foreground")}>
+              <span className={cn("shrink-0 tabular-nums text-sm sm:text-base font-medium", l.estimated && "text-muted-foreground")}>
                 {l.estimated ? "~" : ""}
                 {rupees(l.cost)}
               </span>
@@ -81,13 +81,13 @@ export function CookCard({
         </ul>
 
         {cook.staples.length > 0 && (
-          <p className="text-xs text-muted-foreground/80">
+          <p className="break-words text-xs text-muted-foreground/80">
             Assumed in your pantry: {cook.staples.map((s) => `${s.ingredient} (${s.display})`).join(", ")}
           </p>
         )}
 
         {surplus.length > 0 && (
-          <p className="text-xs text-muted-foreground">
+          <p className="break-words text-xs text-muted-foreground">
             Left over after cooking: {surplus.map((l) => `${l.surplus!.display} ${l.ingredient.toLowerCase()}`).join(", ")}
           </p>
         )}

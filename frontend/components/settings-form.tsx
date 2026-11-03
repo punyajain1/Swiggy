@@ -135,7 +135,7 @@ export function SettingsForm({
         <p className="text-xs text-muted-foreground">Both Swiggy Food and Instamart are priced for this address.</p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-4 sm:gap-6 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="servings">Default servings</Label>
           <Input
@@ -180,10 +180,10 @@ export function SettingsForm({
         <p className="text-xs text-muted-foreground">Changes how long cooking takes you and how good it&apos;s likely to be.</p>
       </div>
 
-      <div className="flex items-start justify-between gap-4 rounded-lg border p-4">
-        <div className="grid gap-1">
+      <div className="flex items-center justify-between gap-4 rounded-lg border p-3.5 sm:p-4">
+        <div className="grid gap-1 min-w-0 flex-1">
           <Label htmlFor="staples">I have basic staples</Label>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground break-words">
             Salt, sugar, oil and common spices aren&apos;t added to the cooking cost.
           </p>
         </div>
@@ -194,7 +194,7 @@ export function SettingsForm({
         />
       </div>
 
-      <Button type="submit" disabled={saving} className="w-fit">
+      <Button type="submit" disabled={saving} className="w-full sm:w-fit">
         {saving && <LoaderCircle className="animate-spin" />}
         Save settings
       </Button>

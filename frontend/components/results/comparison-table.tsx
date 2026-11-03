@@ -11,16 +11,16 @@ export function ComparisonTable({ rows, restaurantName }: { rows: ComparisonRow[
   return (
     <section className="grid gap-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="text-lg font-semibold">Side by side</h3>
+        <h3 className="text-base sm:text-lg font-semibold">Side by side</h3>
         <p className="text-xs text-muted-foreground">
           Cooking wins {tally("cook")} of {rows.length} · ordering wins {tally("order")} of {rows.length}
         </p>
       </div>
-      <div className="rounded-xl border bg-card">
-        <Table>
+      <div className="rounded-xl border bg-card overflow-hidden">
+        <Table className="min-w-[460px] sm:min-w-full">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-40" />
+              <TableHead className="w-32 sm:w-40" />
               <TableHead>Make at home</TableHead>
               <TableHead>Order{restaurantName ? ` (${restaurantName})` : ""}</TableHead>
             </TableRow>
